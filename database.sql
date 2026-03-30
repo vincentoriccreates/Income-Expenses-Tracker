@@ -1,5 +1,5 @@
 -- ============================================================
--- White Villas Resort - Income & Expenses Tracker
+--  Income & Expenses Tracker
 -- Database Schema
 -- ============================================================
 
