@@ -1,0 +1,286 @@
+/* ============================================================
+   style.css — WVR Income & Expenses Tracker
+   ============================================================ */
+
+:root {
+    --sidebar-width: 240px;
+    --sidebar-bg: #1a1d27;
+    --accent: #4f6ef7;
+    --accent-soft: #eef1ff;
+    --income: #22c55e;
+    --expense: #ef4444;
+    --neutral: #6b7280;
+    --card-radius: 14px;
+}
+
+/* ── Layout ── */
+#wrapper {
+    min-height: 100vh;
+}
+
+#sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--sidebar-bg) !important;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    transition: width 0.25s ease;
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+#sidebar.collapsed {
+    width: 0;
+    overflow: hidden;
+}
+
+#page-content {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ── Sidebar Brand ── */
+.sidebar-brand {
+    height: 60px;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* ── Sidebar Nav ── */
+.nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #6b7280;
+    padding: 0 10px 4px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: #9ca3af;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+}
+
+.nav-item:hover {
+    background: rgba(255,255,255,0.06);
+    color: #e5e7eb;
+}
+
+.nav-item.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+.nav-item.sub {
+    padding-left: 32px;
+    font-size: 13px;
+}
+
+/* ── Stat Cards ── */
+.stat-card {
+    background: #fff;
+    border-radius: var(--card-radius);
+    padding: 22px 24px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.stat-icon.income  { background: #dcfce7; color: #16a34a; }
+.stat-icon.expense { background: #fee2e2; color: #dc2626; }
+.stat-icon.balance { background: #dbeafe; color: #2563eb; }
+.stat-icon.neutral { background: #f3f4f6; color: #6b7280; }
+.stat-icon.cash    { background: #fef9c3; color: #ca8a04; }
+.stat-icon.card    { background: #ede9fe; color: #7c3aed; }
+.stat-icon.room    { background: #cffafe; color: #0891b2; }
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--neutral);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+}
+
+/* ── Data Card ── */
+.data-card {
+    background: #fff;
+    border-radius: var(--card-radius);
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    overflow: hidden;
+}
+
+.data-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f3f5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafbfd;
+}
+
+.data-card-body {
+    padding: 20px;
+}
+
+/* ── Table ── */
+.table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #6b7280;
+    font-weight: 600;
+    border-top: none;
+    white-space: nowrap;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+.table-hover tbody tr:hover {
+    background: #f8f9ff;
+}
+
+/* ── Amount badges ── */
+.amount-income  { color: var(--income); font-weight: 600; }
+.amount-expense { color: var(--expense); font-weight: 600; }
+.amount-balance { color: var(--accent); font-weight: 700; }
+
+/* ── Filter bar ── */
+.filter-bar {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: var(--card-radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+/* ── Progress bar ── */
+.category-bar { height: 6px; border-radius: 99px; }
+
+/* ── Breadcrumb ── */
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* ── Form ── */
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-control, .form-select {
+    font-size: 14px;
+    border-radius: 8px;
+    border-color: #d1d5db;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,110,247,.12);
+}
+
+/* ── Buttons ── */
+.btn {
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { background: #3b5bd6; border-color: #3b5bd6; }
+
+/* ── Chart canvas ── */
+.chart-container { position: relative; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    #sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100vh;
+        z-index: 999;
+        width: var(--sidebar-width);
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+    }
+    #sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    .stat-value { font-size: 20px; }
+}
+
+/* ── DataTables overrides ── */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 5px 12px;
+    font-size: 13px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+/* ── Balance positive/negative ── */
+.balance-positive { color: #16a34a; }
+.balance-negative { color: #dc2626; }
+
+/* ── Scrollbar ── */
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: #374151; border-radius: 99px; }
