@@ -1,7 +1,7 @@
 <?php
 // ============================================================
 // functions.php - Helper Functions
-// White Villas Resort - Income & Expenses Tracker
+//  Income & Expenses Tracker
 // ============================================================
 
 require_once __DIR__ . '/config.php';
