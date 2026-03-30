@@ -1,4 +1,4 @@
-# WVR Income & Expenses Tracker
+# Income & Expenses Tracker
 ## White Villas Resort — PHP + MySQL System
 
 ---
