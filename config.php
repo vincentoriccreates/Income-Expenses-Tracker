@@ -1,7 +1,7 @@
 <?php
 // ============================================================
 // config.php - Database Configuration
-// White Villas Resort - Income & Expenses Tracker
+// - Income & Expenses Tracker
 // ============================================================
 
 define('DB_HOST', 'localhost');
