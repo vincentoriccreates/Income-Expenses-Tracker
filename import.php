@@ -18,21 +18,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
 
     if (!in_array($table, $validTables)) {
         setFlash('danger', 'Invalid table selection.');
+        header('Location: import.php'); exit;
     } elseif ($file['error'] !== UPLOAD_ERR_OK) {
         setFlash('danger', 'File upload error. Code: ' . $file['error']);
+        header('Location: import.php'); exit;
     } elseif (!in_array($ext, ['csv','txt'])) {
-        setFlash('danger', 'Only CSV files are supported.');
-    } else {
-        $tmpPath = $file['tmp_name'];
-        $results = importCSV($tmpPath, $table);
-        if ($results['inserted'] > 0) {
-            setFlash('success', $results['inserted'] . ' records imported successfully!');
-        } elseif (empty($results['errors'])) {
-            setFlash('warning', 'No records were imported. Check your CSV format.');
-        }
+        setFlash('danger', 'Only CSV files are supported. Please save your file as CSV (comma-separated).');
+        header('Location: import.php'); exit;
     }
-    header('Location: import.php');
-    exit;
+
+    $tmpPath   = $file['tmp_name'];
+    $clearFirst = isset($_POST['clear_first']) && $_POST['clear_first'] === '1';
+    $results   = importCSV($tmpPath, $table, $clearFirst);
+
+    // Build detailed flash message
+    $parts = [];
+    if (!empty($results['cleared']))  $parts[] = $results['cleared'] . ' old record(s) cleared.';
+    if ($results['inserted'] > 0)     $parts[] = $results['inserted'] . ' record(s) imported.';
+    if (!empty($results['skipped']))  $parts[] = $results['skipped'] . ' row(s) skipped (blank or invalid date).';
+
+    if ($results['inserted'] > 0 && empty($results['errors'])) {
+        setFlash('success', implode(' ', $parts));
+    } elseif ($results['inserted'] > 0) {
+        $errSummary = implode(' | ', array_slice($results['errors'], 0, 5));
+        if (count($results['errors']) > 5) $errSummary .= ' ... and ' . (count($results['errors'])-5) . ' more.';
+        setFlash('warning', implode(' ', $parts) . ' Some rows had issues: ' . $errSummary);
+    } else {
+        $errSummary = implode(' | ', array_slice($results['errors'], 0, 5));
+        setFlash('danger', 'No records imported. ' . ($errSummary ?: 'Check your CSV format — make sure dates are YYYY-MM-DD or MM/DD/YYYY.'));
+    }
+
+    header('Location: import.php'); exit;
 }
 
 include 'includes/header.php';
@@ -71,6 +87,18 @@ include 'includes/header.php';
                         <label class="form-label">CSV File <span class="text-danger">*</span></label>
                         <input type="file" name="csv_file" class="form-control" accept=".csv,.txt" required>
                         <div class="form-text">Max file size: 10MB. Must be UTF-8 encoded CSV.</div>
+                    </div>
+                    <div class="alert alert-warning py-2 px-3 small mb-3">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" name="clear_first" value="1" id="clearFirst">
+                            <label class="form-check-label fw-semibold" for="clearFirst">
+                                <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
+                                Clear all existing records in this table before importing
+                            </label>
+                            <div class="text-muted mt-1" style="font-size:11px">
+                                ⚠ Use this to fix previously imported data with wrong dates. This <strong>permanently deletes</strong> all current records in the selected table before importing the new file.
+                            </div>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-warning">
                         <i class="bi bi-upload me-1"></i>Import Records
@@ -118,7 +146,12 @@ include 'includes/header.php';
 
                 <div class="alert alert-info small mb-0">
                     <i class="bi bi-info-circle me-1"></i>
-                    Week number and month are auto-calculated from the date. Use <strong>YYYY-MM-DD</strong> date format.
+                    <strong>Date formats accepted:</strong><br>
+                    <code>YYYY-MM-DD</code> (e.g. 2025-09-01) &nbsp;·&nbsp;
+                    <code>MM/DD/YYYY</code> (e.g. 09/01/2025) &nbsp;·&nbsp;
+                    <code>DD-MM-YYYY</code> (e.g. 01-09-2025)<br>
+                    Week number and month are <strong>auto-calculated</strong> — do not include them in the CSV.
+                    If your file was saved from Excel, use <em>Save As → CSV UTF-8</em>.
                 </div>
             </div>
         </div>

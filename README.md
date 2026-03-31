@@ -192,4 +192,3 @@ Built for White Villas Resort (WVR) based on the WVR_Income___Expenses_Tracker.x
 ---
 
 *Generated: <?= date('F d, Y') ?>*
-"# Income-Expenses-Tracker" 

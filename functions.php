@@ -12,16 +12,104 @@ function formatCurrency(float $amount): string {
     return CURRENCY . number_format($amount, 2);
 }
 
+/**
+ * Robustly parse any date string into a Unix timestamp.
+ * Handles: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, Excel serials, BOM, etc.
+ */
+function parseDate(string $raw): int|false {
+    // 1. Strip UTF-8 BOM, non-breaking spaces, zero-width spaces, whitespace
+    $raw = trim(preg_replace('/[\x{FEFF}\x{00A0}\x{200B}]/u', '', $raw));
+    if ($raw === '') return false;
+
+    // 2. Strip any time portion Excel appends, e.g. "9/1/2025 12:00:00 AM" -> "9/1/2025"
+    //    Also handles ISO datetime "2025-09-01T00:00:00" or "2025-09-01 00:00:00"
+    $raw = preg_replace('/\s+\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$/i', '', trim($raw));
+    $raw = preg_replace('/T\d{2}:\d{2}(:\d{2})?.*$/', '', $raw);
+    $raw = trim($raw);
+
+    // 3. MM/DD/YYYY or M/D/YYYY — slash format (Excel default, PRIORITY)
+    //    e.g. "09/01/2025" = September 1 | "1/13/2026" = January 13
+    //    Detect by checking: if second number > 12, it MUST be the day (so first = month)
+    //    If both <= 12, we still treat as MM/DD since that is confirmed format for this app
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $raw, $m)) {
+        $p1 = (int)$m[1]; $p2 = (int)$m[2]; $yr = (int)$m[3];
+        // If p1 > 12, it cannot be a month — treat as DD/MM
+        if ($p1 > 12) {
+            $ts = mktime(0, 0, 0, $p2, $p1, $yr); // DD/MM
+        } else {
+            $ts = mktime(0, 0, 0, $p1, $p2, $yr); // MM/DD (confirmed app format)
+        }
+        return ($ts && $ts > 0) ? $ts : false;
+    }
+
+    // 4. MM-DD-YYYY — dash format (same MM/DD logic)
+    if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $raw, $m)) {
+        $p1 = (int)$m[1]; $p2 = (int)$m[2]; $yr = (int)$m[3];
+        if ($p1 > 12) {
+            $ts = mktime(0, 0, 0, $p2, $p1, $yr); // DD/MM
+        } else {
+            $ts = mktime(0, 0, 0, $p1, $p2, $yr); // MM/DD
+        }
+        return ($ts && $ts > 0) ? $ts : false;
+    }
+
+    // 5. MM.DD.YYYY — dot format
+    if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $raw, $m)) {
+        $p1 = (int)$m[1]; $p2 = (int)$m[2]; $yr = (int)$m[3];
+        if ($p1 > 12) {
+            $ts = mktime(0, 0, 0, $p2, $p1, $yr);
+        } else {
+            $ts = mktime(0, 0, 0, $p1, $p2, $yr);
+        }
+        return ($ts && $ts > 0) ? $ts : false;
+    }
+
+    // 6. YYYY-MM-DD — ISO standard
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $m)) {
+        $ts = mktime(0, 0, 0, (int)$m[2], (int)$m[3], (int)$m[1]);
+        return ($ts && $ts > 0) ? $ts : false;
+    }
+
+    // 7. YYYY/MM/DD
+    if (preg_match('/^(\d{4})\/(\d{2})\/(\d{2})$/', $raw, $m)) {
+        $ts = mktime(0, 0, 0, (int)$m[2], (int)$m[3], (int)$m[1]);
+        return ($ts && $ts > 0) ? $ts : false;
+    }
+
+    // 7. Excel serial number (integer or float, range covers ~1990–2050)
+    if (preg_match('/^\d+(\.\d+)?$/', $raw)) {
+        $serial = (float)$raw;
+        if ($serial > 25000 && $serial < 100000) {
+            // Excel epoch is Dec 30 1899 (accounts for Excel's fake Feb 29 1900 leap bug)
+            $ts = mktime(0, 0, 0, 12, 30, 1899) + (int)($serial * 86400);
+            return ($ts > 0 && date('Y', $ts) >= 1980) ? $ts : false;
+        }
+    }
+
+    // 8. strtotime fallback — handles "Sep 1, 2025", natural language, etc.
+    $ts = strtotime($raw);
+    if ($ts === false || $ts <= 0 || date('Y', $ts) < 1980) return false;
+    return $ts;
+}
+
+function parseDateToMySQL(string $raw): string|false {
+    $ts = parseDate($raw);
+    return $ts ? date('Y-m-d', $ts) : false;
+}
+
 function formatDate(string $date): string {
-    return date('M d, Y', strtotime($date));
+    $ts = parseDate($date);
+    return $ts ? date('M d, Y', $ts) : htmlspecialchars($date);
 }
 
 function getWeekNumber(string $date): int {
-    return (int) date('W', strtotime($date));
+    $ts = parseDate($date);
+    return $ts ? (int)date('W', $ts) : (int)date('W');
 }
 
 function getMonth(string $date): string {
-    return date('F', strtotime($date));
+    $ts = parseDate($date);
+    return $ts ? date('F', $ts) : date('F');
 }
 
 function sanitize(string $input): string {
@@ -253,57 +341,90 @@ function exportCSV(array $data, array $headers, string $filename): void {
 
 // ── Import CSV / Excel ────────────────────────────────────────
 
-function importCSV(string $filePath, string $table): array {
-    $results = ['inserted' => 0, 'errors' => []];
+function importCSV(string $filePath, string $table, bool $clearFirst = false): array {
+    $results = ['inserted' => 0, 'skipped' => 0, 'errors' => [], 'cleared' => 0];
+
+    // Optionally wipe existing records before importing
+    if ($clearFirst) {
+        $allowed = ['petty_expenses','hl_expenses','income_cash','income_card','income_roomcharged'];
+        if (in_array($table, $allowed)) {
+            $count = (int) Database::fetch("SELECT COUNT(*) AS c FROM $table")['c'];
+            Database::execute("TRUNCATE TABLE $table");
+            $results['cleared'] = $count;
+        }
+    }
+
     $handle = fopen($filePath, 'r');
     if (!$handle) {
         $results['errors'][] = 'Cannot open file.';
         return $results;
     }
 
-    $headers = fgetcsv($handle); // skip header row
+    // Skip BOM on first line if present
+    $bom = fread($handle, 3);
+    if ($bom !== "ï»¿") rewind($handle);
+
+    // Skip header row
+    fgetcsv($handle);
     $line = 2;
 
     while (($row = fgetcsv($handle)) !== false) {
+        // Skip completely blank rows
+        if (empty(array_filter($row, fn($c) => trim($c) !== ''))) {
+            $line++;
+            continue;
+        }
+
         try {
+            $rawDate = trim($row[0] ?? '');
+            $mysqlDate = parseDateToMySQL($rawDate);
+
+            if (!$mysqlDate) {
+                $results['errors'][] = "Line $line: Cannot parse date '" . htmlspecialchars($rawDate) . "' — skipped.";
+                $results['skipped']++;
+                $line++;
+                continue;
+            }
+
+            $week  = getWeekNumber($mysqlDate);
+            $month = getMonth($mysqlDate);
+
             if ($table === 'petty_expenses' || $table === 'hl_expenses') {
-                $date   = trim($row[0] ?? '');
                 $desc   = trim($row[1] ?? '');
-                $amount = (float)($row[2] ?? 0);
-                if (!$date || !$desc) { $line++; continue; }
-                $week = getWeekNumber($date);
-                $month = getMonth($date);
+                $amount = (float)preg_replace('/[^0-9.\-]/', '', $row[2] ?? '0');
+                if (!$desc) {
+                    $results['skipped']++;
+                    $line++;
+                    continue;
+                }
                 Database::execute(
                     "INSERT INTO $table (date, description, amount, week_number, month) VALUES (?,?,?,?,?)",
-                    [$date, $desc, $amount, $week, $month]
+                    [$mysqlDate, $desc, $amount, $week, $month]
                 );
+
             } elseif ($table === 'income_cash' || $table === 'income_card') {
-                $date     = trim($row[0] ?? '');
                 $category = trim($row[1] ?? '');
-                $amount   = (float)($row[2] ?? 0);
-                if (!$date) { $line++; continue; }
-                $week  = getWeekNumber($date);
-                $month = getMonth($date);
+                $amount   = (float)preg_replace('/[^0-9.\-]/', '', $row[2] ?? '0');
                 Database::execute(
                     "INSERT INTO $table (date, category, amount, week_number, month) VALUES (?,?,?,?,?)",
-                    [$date, $category, $amount, $week, $month]
+                    [$mysqlDate, $category ?: 'Other', $amount, $week, $month]
                 );
+
             } elseif ($table === 'income_roomcharged') {
-                $date   = trim($row[0] ?? '');
-                $ref    = trim($row[1] ?? '');
-                $amount = (float)($row[2] ?? 0);
-                if (!$date) { $line++; continue; }
-                $week  = getWeekNumber($date);
-                $month = getMonth($date);
+                $ref    = trim($row[1] ?? '') ?: null;
+                $amount = (float)preg_replace('/[^0-9.\-]/', '', $row[2] ?? '0');
                 Database::execute(
                     "INSERT INTO $table (date, room_reference, amount, week_number, month) VALUES (?,?,?,?,?)",
-                    [$date, $ref ?: null, $amount, $week, $month]
+                    [$mysqlDate, $ref, $amount, $week, $month]
                 );
             }
+
             $results['inserted']++;
+
         } catch (Exception $e) {
             $results['errors'][] = "Line $line: " . $e->getMessage();
         }
+
         $line++;
     }
 
