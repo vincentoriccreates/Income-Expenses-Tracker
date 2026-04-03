@@ -116,9 +116,16 @@ include 'includes/header.php';
         <h1><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Reports</h1>
         <p class="text-muted mb-0">Monthly and weekly financial summary — <?= date('F Y', mktime(0,0,0,$selMonth,1,$selYear)) ?></p>
     </div>
-    <a href="exports/export.php?table=report&year=<?= $selYear ?>&month=<?= $selMonth ?>" class="btn btn-outline-success btn-sm">
-        <i class="bi bi-download me-1"></i>Export CSV
-    </a>
+    <div class="d-flex gap-2">
+        <a href="exports/export.php?table=report&year=<?= $selYear ?>&month=<?= $selMonth ?>"
+           class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export CSV
+        </a>
+        <a href="report_pdf.php?year=<?= $selYear ?>&month=<?= $selMonth ?>"
+           class="btn btn-danger btn-sm" target="_blank">
+            <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF
+        </a>
+    </div>
 </div>
 
 <!-- Period Selector -->
