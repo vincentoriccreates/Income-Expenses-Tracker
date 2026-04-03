@@ -4,6 +4,8 @@
 // ============================================================
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'includes/auth.php';
+requireLogin();
 
 $tableAlias = $_GET['table']    ?? '';
 $id         = (int)($_GET['id'] ?? 0);

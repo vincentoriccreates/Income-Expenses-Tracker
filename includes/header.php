@@ -1,7 +1,9 @@
 <?php
 // includes/header.php
 if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../includes/auth.php';
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+$_currentUser = currentUser();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,10 +73,27 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             <a href="import.php" class="nav-item <?= $currentPage === 'import' ? 'active' : '' ?>">
                 <i class="bi bi-upload"></i> Import Data
             </a>
+            <?php if (isAdmin()): ?>
+            <a href="users.php" class="nav-item <?= $currentPage === 'users' ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i> Users
+            </a>
+            <?php endif; ?>
         </div>
 
         <div class="p-3 border-top border-secondary">
-            <small class="text-secondary">v1.0.0 &copy; <?= date('Y') ?> WVR</small>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div style="width:24px;height:24px;border-radius:50%;background:#4f6ef7;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0">
+                    <?= strtoupper(substr($_currentUser['name'],0,1)) ?>
+                </div>
+                <div style="min-width:0">
+                    <div class="text-white small fw-semibold text-truncate" style="font-size:12px"><?= htmlspecialchars($_currentUser['name']) ?></div>
+                    <div class="text-secondary" style="font-size:10px"><?= ucfirst($_currentUser['role']) ?></div>
+                </div>
+                <a href="logout.php" class="ms-auto text-secondary" title="Sign Out" style="font-size:15px">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+            <small class="text-secondary" style="font-size:10px">v1.0.0 &copy; <?= date('Y') ?> WVR</small>
         </div>
     </nav>
 
@@ -88,11 +107,41 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
             <span class="navbar-brand mb-0 h6 text-secondary fw-normal">
                 <?= $pageTitle ?? APP_NAME ?>
             </span>
-            <div class="ms-auto d-flex align-items-center gap-2">
-                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
-                    <i class="bi bi-circle-fill me-1" style="font-size:8px"></i>Live
-                </span>
-                <span class="text-muted small"><?= date('M d, Y') ?></span>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <span class="text-muted small d-none d-md-inline"><?= date('M d, Y') ?></span>
+
+                <!-- User dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-light btn-sm d-flex align-items-center gap-2 border" data-bs-toggle="dropdown">
+                        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">
+                            <?= strtoupper(substr($_currentUser['name'],0,1)) ?>
+                        </div>
+                        <span class="d-none d-md-inline small fw-semibold"><?= htmlspecialchars($_currentUser['name']) ?></span>
+                        <i class="bi bi-chevron-down" style="font-size:10px"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="min-width:200px;border-radius:12px;margin-top:8px">
+                        <li>
+                            <div class="px-3 py-2 border-bottom">
+                                <div class="fw-semibold small"><?= htmlspecialchars($_currentUser['name']) ?></div>
+                                <div class="text-muted" style="font-size:11px"><?= htmlspecialchars($_currentUser['email']) ?></div>
+                                <span class="badge <?= $_currentUser['role']==='admin'?'bg-primary':'bg-success' ?> mt-1" style="font-size:10px">
+                                    <?= ucfirst($_currentUser['role']) ?>
+                                </span>
+                            </div>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="profile.php"><i class="bi bi-person me-2 text-muted"></i>My Profile</a></li>
+                        <li><a class="dropdown-item py-2" href="profile.php#password" onclick="setTimeout(()=>document.querySelector('[onclick*=password]')?.click(),200)"><i class="bi bi-lock me-2 text-muted"></i>Change Password</a></li>
+                        <?php if (isAdmin()): ?>
+                        <li><a class="dropdown-item py-2" href="users.php"><i class="bi bi-people me-2 text-muted"></i>Manage Users</a></li>
+                        <?php endif; ?>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item py-2 text-danger" href="logout.php">
+                                <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </nav>
 

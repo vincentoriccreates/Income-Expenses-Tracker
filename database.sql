@@ -1,5 +1,5 @@
 -- ============================================================
---  Income & Expenses Tracker
+-- White Villas Resort - Income & Expenses Tracker
 -- Database Schema
 -- ============================================================
 
@@ -203,3 +203,23 @@ INSERT INTO income_roomcharged (date, room_reference, amount, week_number, month
 ('2025-09-06', 'B3, B4, B5', 8415.00, 36, 'September'),
 ('2025-09-07', 'B3, B4, B5', 10515.00, 36, 'September'),
 ('2025-09-07', 'P4', 2085.00, 36, 'September');
+
+-- ============================================================
+-- Users Table (Login System)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin','staff') NOT NULL DEFAULT 'staff',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    last_login DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Default admin account (password: Admin@1234)
+-- Run setup.php ONCE after importing this SQL to create the admin account with correct hash
+-- OR manually insert after running: SELECT password_hash('Admin@1234', PASSWORD_BCRYPT);
