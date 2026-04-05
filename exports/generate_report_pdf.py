@@ -5,6 +5,7 @@ Called by report_pdf.php via shell_exec, receives data via stdin as JSON
 """
 
 import sys
+import os
 import json
 from datetime import datetime
 from reportlab.lib.pagesizes import A4
@@ -482,8 +483,17 @@ def _build_room_table(rows_data, W, normal, right, small):
 
 
 if __name__ == '__main__':
-    raw  = sys.stdin.read()
+    # argv[1] = output PDF path
+    # argv[2] = input JSON file path (avoids stdin issues on Windows/Apache)
+    out      = sys.argv[1] if len(sys.argv) > 1 else '/tmp/wvr_report.pdf'
+    json_src = sys.argv[2] if len(sys.argv) > 2 else None
+
+    if json_src and os.path.exists(json_src):
+        with open(json_src, 'r', encoding='utf-8') as jf:
+            raw = jf.read()
+    else:
+        raw = sys.stdin.read()
+
     data = json.loads(raw)
-    out  = sys.argv[1] if len(sys.argv) > 1 else '/tmp/wvr_report.pdf'
     build_pdf(data, out)
     print('OK')
