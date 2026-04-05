@@ -1,5 +1,5 @@
-# WVR Income & Expenses Tracker
-## White Villas Resort — PHP + MySQL System
+#  Income & Expenses Tracker
+##  — PHP + MySQL System
 
 ---
 
@@ -14,9 +14,9 @@
 ## 🚀 Setup Instructions (XAMPP)
 
 ### Step 1 — Copy Files
-Copy the entire `wvr_tracker` folder to:
+Copy the entire `_tracker` folder to:
 ```
-C:\xampp\htdocs\wvr_tracker\
+C:\xampp\htdocs\_tracker\
 ```
 
 ### Step 2 — Start XAMPP Services
@@ -30,7 +30,7 @@ C:\xampp\htdocs\wvr_tracker\
    http://localhost/phpmyadmin
    ```
 2. Click **Import** in the top menu
-3. Click **Choose File** and select `wvr_tracker/database.sql`
+3. Click **Choose File** and select `_tracker/database.sql`
 4. Click **Go** to execute
 
    **OR** use the SQL tab and paste the contents of `database.sql` manually.
@@ -41,13 +41,13 @@ Open `config.php` and update if needed:
 define('DB_HOST', 'localhost');   // Usually 'localhost'
 define('DB_USER', 'root');        // Your MySQL username
 define('DB_PASS', '');            // Your MySQL password (blank for XAMPP default)
-define('DB_NAME', 'wvr_tracker'); // Database name
+define('DB_NAME', '_tracker'); // Database name
 ```
 
 ### Step 5 — Access the Application
 Open your browser and visit:
 ```
-http://localhost/wvr_tracker/
+http://localhost/_tracker/
 ```
 
 ---
@@ -55,7 +55,7 @@ http://localhost/wvr_tracker/
 ## 📁 Project Structure
 
 ```
-wvr_tracker/
+_tracker/
 ├── index.php              # Dashboard (main page)
 ├── income.php             # All income records
 ├── expense.php            # All expense records
@@ -171,7 +171,7 @@ wvr_tracker/
 - Enable PHP error display: add `ini_set('display_errors', 1);` at top of `index.php`
 
 **Database import fails?**
-- Make sure you've created a database named `wvr_tracker` first in phpMyAdmin
+- Make sure you've created a database named `_tracker` first in phpMyAdmin
 - Try running the SQL in chunks if the file is too large
 
 **CSV import issues?**
@@ -183,7 +183,7 @@ wvr_tracker/
 
 ## 📞 Support
 
-Built for White Villas Resort (WVR) based on the WVR_Income___Expenses_Tracker.xlsx structure.
+Built for  () based on the _Income___Expenses_Tracker.xlsx structure.
 
 - Income types: Paid by Cash, Paid by Card, Room Charged
 - Expense types: Petty Expenses, H/L Expenses
